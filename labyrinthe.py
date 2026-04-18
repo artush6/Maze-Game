@@ -161,6 +161,8 @@ def main():
     screen = pygame.display.set_mode((width * cell_size, height * cell_size))
     pygame.display.set_caption("Maze Base")
     clock = pygame.time.Clock()
+    font = pygame.font.SysFont(None, 48)
+    won = False
 
     running = True
     while running:
@@ -169,21 +171,34 @@ def main():
                 running = False
 
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
+                if event.key == pygame.K_UP and not won:
                     player.move("N", maze)
-                elif event.key == pygame.K_DOWN:
+                elif event.key == pygame.K_DOWN and not won:
                     player.move("S", maze)
-                elif event.key == pygame.K_LEFT:
+                elif event.key == pygame.K_LEFT and not won:
                     player.move("W", maze)
-                elif event.key == pygame.K_RIGHT:
+                elif event.key == pygame.K_RIGHT and not won:
                     player.move("E", maze)
                 elif event.key == pygame.K_r:
                     maze = Maze(width, height, cell_size)
                     maze.generate()
-                    player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, True, 0)
+                    player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0)
+                    won = False
+
+            if (player.i, player.j) == maze.exit:
+                won = True
 
         maze.draw(screen)
         player.draw(screen, maze.cell_size)
+
+        if won:
+            message = font.render("You Won! Press R to restart", True, (255, 255, 255))
+            message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+            background_rect = message_rect.inflate(24, 20)
+            pygame.draw.rect(screen, (20, 24, 38), background_rect)
+            pygame.draw.rect(screen, (255, 215, 0), background_rect, 2)
+            screen.blit(message, message_rect)
+
         pygame.display.flip()
         clock.tick(60)
 
