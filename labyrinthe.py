@@ -2,6 +2,7 @@ import pygame
 from random import choice, randint
 
 from pile import Stack
+from player import Player
 
 
 class Cell:
@@ -154,6 +155,9 @@ def main():
     maze = Maze(width, height, cell_size)
     maze.generate()
 
+    player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0)
+
+
     screen = pygame.display.set_mode((width * cell_size, height * cell_size))
     pygame.display.set_caption("Maze Base")
     clock = pygame.time.Clock()
@@ -163,17 +167,27 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
-                # Press R to generate a new random maze without restarting the program.
-                maze = Maze(width, height, cell_size)
-                maze.generate()
+
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    player.move("N", maze)
+                elif event.key == pygame.K_DOWN:
+                    player.move("S", maze)
+                elif event.key == pygame.K_LEFT:
+                    player.move("W", maze)
+                elif event.key == pygame.K_RIGHT:
+                    player.move("E", maze)
+                elif event.key == pygame.K_r:
+                    maze = Maze(width, height, cell_size)
+                    maze.generate()
+                    player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, True, 0)
 
         maze.draw(screen)
+        player.draw(screen, maze.cell_size)
         pygame.display.flip()
         clock.tick(60)
 
     pygame.quit()
-
 
 if __name__ == "__main__":
     main()
