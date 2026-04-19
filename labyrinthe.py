@@ -3,6 +3,7 @@ from random import choice, randint
 
 from pile import Stack
 from player import Player
+from enemy import Enemy
 
 
 class Cell:
@@ -156,6 +157,7 @@ def main():
     maze.generate()
 
     player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0)
+    enemy = Enemy(12,10,(80, 255, 80),100,100,0)
 
 
     screen = pygame.display.set_mode((width * cell_size, height * cell_size))
@@ -171,6 +173,9 @@ def main():
                 running = False
 
             elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    enemy.find_path(maze, (player.i,player.j))
+                    enemy.move()
                 if event.key == pygame.K_UP and not won:
                     player.move("N", maze)
                 elif event.key == pygame.K_DOWN and not won:
@@ -189,6 +194,7 @@ def main():
                 won = True
 
         maze.draw(screen)
+        enemy.draw(screen, maze.cell_size)
         player.draw(screen, maze.cell_size)
 
         if won:
