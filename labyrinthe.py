@@ -188,6 +188,7 @@ def main():
                     maze = Maze(width, height, cell_size)
                     maze.generate()
                     player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0)
+                    enemy = Enemy(12,10,(80, 255, 80),100,100,0)
                     won = False
 
             if (player.i, player.j) == maze.exit:
