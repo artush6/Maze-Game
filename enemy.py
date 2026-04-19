@@ -11,9 +11,10 @@ class Enemy:
         self.current_path = []
 
     def move(self):
-        nv_position = self.current_path.pop(0)
-        self.i = nv_position[0]
-        self.j = nv_position[1]
+        if self.current_path != []:
+            nv_position = self.current_path.pop(0)
+            self.i = nv_position[0]
+            self.j = nv_position[1]
     
 
     def find_path(self, maze, goal):
