@@ -144,6 +144,9 @@ class Maze:
                 if case.wall_east:
                     pygame.draw.line(surface, self.wall_color, (x + cell, y), (x + cell, y + cell), 2)
 
+    def break_wall(self, i, j, direction):
+        pass
+
 
 def main():
     """Launch a small Pygame window that shows the generated maze."""
@@ -156,7 +159,7 @@ def main():
     maze = Maze(width, height, cell_size)
     maze.generate()
 
-    player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0)
+    player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0, facing="E")
     enemy = Enemy(12,10,(80, 255, 80),100,100,0)
 
 
@@ -187,7 +190,7 @@ def main():
                 elif event.key == pygame.K_r:
                     maze = Maze(width, height, cell_size)
                     maze.generate()
-                    player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0)
+                    player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0, facing="E")
                     enemy = Enemy(12,10,(80, 255, 80),100,100,0)
                     won = False
 
