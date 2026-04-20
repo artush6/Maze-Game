@@ -1,5 +1,5 @@
 import pygame
-from random import choice, randint
+from random import choice, randint, shuffle
 
 from pile import Stack
 from player import Player
@@ -39,6 +39,21 @@ class Maze:
         self.exit = (width - 1, height - 1)
         self.grid = [[Cell() for _ in range(height)] for _ in range(width)]
 
+    def __open_wall(self, i, j, direction):
+        """Open the wall in `direction` and the matching wall in the neighboring cell."""
+        if direction == "N" and j > 0:
+            self.grid[i][j].wall_north = False
+            self.grid[i][j - 1].wall_south = False
+        elif direction == "S" and j < self.height - 1:
+            self.grid[i][j].wall_south = False
+            self.grid[i][j + 1].wall_north = False
+        elif direction == "W" and i > 0:
+            self.grid[i][j].wall_west = False
+            self.grid[i - 1][j].wall_east = False
+        elif direction == "E" and i < self.width - 1:
+            self.grid[i][j].wall_east = False
+            self.grid[i + 1][j].wall_west = False
+
     def __possible_directions(self, i, j):
         """Return the directions that lead to unvisited neighboring cells."""
         directions = []
@@ -60,25 +75,37 @@ class Maze:
     def __remove_wall(self, i, j, direction, stack):
         """Open the wall between the current cell and the chosen neighbor."""
         if direction == "S":
-            self.grid[i][j].wall_south = False
-            self.grid[i][j + 1].wall_north = False
+            self.__open_wall(i, j, direction)
             self.grid[i][j + 1].visited = True
             stack.push((i, j + 1))
         elif direction == "N":
-            self.grid[i][j].wall_north = False
-            self.grid[i][j - 1].wall_south = False
+            self.__open_wall(i, j, direction)
             self.grid[i][j - 1].visited = True
             stack.push((i, j - 1))
         elif direction == "E":
-            self.grid[i][j].wall_east = False
-            self.grid[i + 1][j].wall_west = False
+            self.__open_wall(i, j, direction)
             self.grid[i + 1][j].visited = True
             stack.push((i + 1, j))
         elif direction == "W":
-            self.grid[i][j].wall_west = False
-            self.grid[i - 1][j].wall_east = False
+            self.__open_wall(i, j, direction)
             self.grid[i - 1][j].visited = True
             stack.push((i - 1, j))
+
+    def __add_extra_openings(self, count):
+        """Open a few additional walls to create loops in the maze."""
+        candidates = []
+
+        for i in range(self.width):
+            for j in range(self.height):
+                if i < self.width - 1 and self.grid[i][j].wall_east:
+                    candidates.append((i, j, "E"))
+                if j < self.height - 1 and self.grid[i][j].wall_south:
+                    candidates.append((i, j, "S"))
+
+        shuffle(candidates)
+
+        for i, j, direction in candidates[:count]:
+            self.__open_wall(i, j, direction)
 
     def generate(self):
         """Generate a random maze using depth-first search with backtracking."""
@@ -99,6 +126,8 @@ class Maze:
                 direction = choice(directions)
                 self.__remove_wall(i, j, direction, stack)
 
+        extra_openings = max(1, (self.width * self.height) // 12)
+        self.__add_extra_openings(extra_openings)
         self.create_entry_and_exit()
 
     def create_entry_and_exit(self):
