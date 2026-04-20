@@ -134,9 +134,7 @@ class Maze:
         """Open one entrance and one exit on opposite corners."""
         self.entry = (0, 0)
         self.exit = (self.width - 1, self.height - 1)
-        self.grid[0][0].wall_west = False
-        self.grid[self.width - 1][self.height - 1].wall_east = False
-
+        
     def draw(self, surface):
         """Draw the full maze in a Pygame window."""
         cell = self.cell_size
