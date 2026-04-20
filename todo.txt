@@ -1,3 +1,19 @@
+
+Gameplay
+- make a maze with several possible paths
+- Add player health and damage when an enemy touches the player.
+- Add a simple attack system with a cooldown.
+- Add temporary obstacles that appear after some time and then disappear.
+
+UI / Menu
+- Create a start menu with at least `Start` and `Quit`.
+- Display a lose screen when health reaches 0.
+- Show basic information on screen: health, controls, game state.
+
+- Keep the project small and understandable: one feature, then verify, then continue.
+
+Done
+
 Core system
 - Replace the old matplotlib display with a Pygame window.
 - Keep the `Cell` and `Maze` classes so the original project structure stays visible.
@@ -11,19 +27,12 @@ Gameplay
 - Prevent movement through walls by using `wall_north`, `wall_south`, `wall_east`, `wall_west`.
 - Add a visible exit tile and detect when the player reaches it.
 - Create an `Enemy` class with simple movement.
-- Add player health and damage when an enemy touches the player.
-- Add a simple attack system with a cooldown.
-- Add temporary obstacles that appear after some time and then disappear.
 
 UI / Menu
-- Create a start menu with at least `Start` and `Quit`.
 - Display a win screen when the player reaches the exit.
-- Display a lose screen when health reaches 0.
-- Show basic information on screen: health, controls, game state.
 
 Polish
 - Rename variables and methods into full English where needed.
 - Add short comments only where the logic is not obvious.
 - Choose simple but clear colors for the maze, player, enemies, and exit.
 - Test each feature one by one instead of coding everything at once.
-- Keep the project small and understandable: one feature, then verify, then continue.
