@@ -1,5 +1,6 @@
 import pygame
 
+
 class Enemy:
     def __init__(self, i, j, color, health, max_health, attack_cooldown):
         self.i = i
@@ -9,6 +10,10 @@ class Enemy:
         self.max_health = max_health
         self.attack_cooldown = attack_cooldown
         self.current_path = []
+
+    @property
+    def is_alive(self):
+        return self.health > 0
 
     def move(self):
         if self.current_path != []:
@@ -62,6 +67,16 @@ class Enemy:
                         next_cell = (ni, nj)
                 
 
+                    if (direction == 'N' and not maze.grid[current[0]][current[1]].wall_north) or \
+                        (direction == 'S' and not maze.grid[current[0]][current[1]].wall_south) or \
+                        (direction == 'W' and not maze.grid[current[0]][current[1]].wall_west) or \
+                        (direction == 'E' and not maze.grid[current[0]][current[1]].wall_east):
+                        tentative_g = g_score[current] + 1
+                        if next_cell not in g_score or tentative_g < g_score[next_cell]:
+                            came_from[next_cell] = current
+                            g_score[next_cell] = tentative_g
+                            f_score[next_cell] = tentative_g + distance(next_cell, goal)
+                            open_set.append((f_score[next_cell], tentative_g, next_cell))
                         if (direction == 'N' and not maze.grid[current[0]][current[1]].wall_north) or \
                             (direction == 'S' and not maze.grid[current[0]][current[1]].wall_south) or \
                             (direction == 'W' and not maze.grid[current[0]][current[1]].wall_west) or \
@@ -79,6 +94,9 @@ class Enemy:
         return self.current_path == []
         
     def draw(self, surface, cell_size):
+        if not self.is_alive:
+            return
+
         x = self.i * cell_size
         y = self.j * cell_size
 

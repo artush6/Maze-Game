@@ -4,6 +4,7 @@ from random import choice, randint, shuffle
 from pile import Stack
 from player import Player
 from enemy import Enemy
+from bullet import Bullet
 
 
 class Cell:
@@ -182,9 +183,13 @@ def main():
     width = 20
     height = 20
 
+    bullets = []
+
     maze = Maze(width, height, cell_size)
     maze.generate()
 
+    player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0, facing="E")
+    enemy = Enemy(12,10,(80, 255, 80),100,100,0)
     player = Player(maze.entry[0], maze.entry[1], 4, 4, 0, facing="E")
     enemy1 = Enemy(1, 19, (80, 255, 80), 100, 100, 0)
     enemy2 = Enemy(19, 19, (255, 255, 40), 100, 100, 0)
@@ -221,9 +226,32 @@ def main():
                     player.move("W", maze)
                 elif event.key == pygame.K_RIGHT and not won and not lost:
                     player.move("E", maze)
+                elif event.key == pygame.K_s:
+                    bullet_x = player.i * maze.cell_size + maze.cell_size // 2
+                    bullet_y = player.j * maze.cell_size + maze.cell_size // 2
+
+                    if player.facing == "N":
+                        dx, dy = 0, -1
+                        bullet_y -= 10
+                    elif player.facing == "S":
+                        dx, dy = 0, 1
+                        bullet_y += 10
+                    elif player.facing == "W":
+                        dx, dy = -1, 0
+                        bullet_x -= 10
+                    else:
+                        dx, dy = 1, 0
+                        bullet_x += 10
+
+                    new_bullet = Bullet(bullet_x, bullet_y, dx, dy)
+                    bullets.append(new_bullet)
+
                 elif event.key == pygame.K_r:
                     maze = Maze(width, height, cell_size)
                     maze.generate()
+                    player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0, facing="E")
+                    enemy = Enemy(12,10,(80, 255, 80),100,100,0)
+                    bullets = []
                     player = Player(maze.entry[0], maze.entry[1], 4, 4, 0, facing="E")
                     enemy1 = Enemy(1, 19, (80, 255, 80), 100, 100, 0)
                     enemy2 = Enemy(19, 19, (255, 255, 40), 100, 100, 0)
@@ -254,6 +282,15 @@ def main():
         
         if (player.i, player.j) == maze.exit:
             won = True
+
+        for bullet in bullets:
+            bullet.update(maze, screen.get_width(), screen.get_height())
+            if enemy.is_alive:
+                bullet.collides_with_enemy(enemy, maze.cell_size)
+
+        bullets = [bullet for bullet in bullets if bullet.alive]
+
+        # 🔹 Affichage
             
         if player.health == 0:
             lost = True
@@ -262,6 +299,8 @@ def main():
         for enemy in list_enemy:
             enemy.draw(screen, maze.cell_size)
         player.draw(screen, maze.cell_size)
+        for bullet in bullets:
+            bullet.draw(screen)
 
         if won:
             message = font.render("You Won! Press R to restart", True, (255, 255, 255))
