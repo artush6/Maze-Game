@@ -16,7 +16,7 @@ class Player:
         self.max_health = max_health
         self.attack_cooldown = attack_cooldown
         self.facing = facing
-        self.color = ("red","orange","yellow","green")
+        self.color = ("red", "red", "orange", "yellow", "green")
 
     def move(self, direction, maze):
         if direction in self.DIRECTION_OFFSETS:
@@ -51,5 +51,5 @@ class Player:
             body_center[1] + nose_dy * (body_radius - 3),
         )
 
-        pygame.draw.circle(surface, self.color[self.health-1], body_center, body_radius)
+        pygame.draw.circle(surface, self.color[self.health], body_center, body_radius)
         pygame.draw.circle(surface, (255, 245, 180), nose_center, 4)
