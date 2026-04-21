@@ -213,13 +213,13 @@ def main():
                 test_position = True
 
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP and not won:
+                if event.key == pygame.K_UP and not won and not lost:
                     player.move("N", maze)
-                elif event.key == pygame.K_DOWN and not won:
+                elif event.key == pygame.K_DOWN and not won and not lost:
                     player.move("S", maze)
-                elif event.key == pygame.K_LEFT and not won:
+                elif event.key == pygame.K_LEFT and not won and not lost:
                     player.move("W", maze)
-                elif event.key == pygame.K_RIGHT and not won:
+                elif event.key == pygame.K_RIGHT and not won and not lost:
                     player.move("E", maze)
                 elif event.key == pygame.K_r:
                     maze = Maze(width, height, cell_size)
@@ -236,7 +236,7 @@ def main():
 
 
         
-        if current_time - last_enemy_move > move_delay:
+        if current_time - last_enemy_move > move_delay and not won and not lost:
             test_position = True
             for enemy in list_enemy:
                 enemy.find_path(maze, (player.i, player.j))
@@ -249,7 +249,6 @@ def main():
             for enemy in list_enemy:
                 if enemy.in_player() and player.health > 0:
                     player.health -= 1
-                    print(player.health)
 
 
         
