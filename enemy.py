@@ -90,8 +90,8 @@ class Enemy:
 
 
         
-    def in_player(self):
-        return self.current_path == []
+    def in_player(self, player):
+        return self.is_alive and self.i == player.i and self.j == player.j
         
     def draw(self, surface, cell_size):
         if not self.is_alive:
