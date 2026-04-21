@@ -190,9 +190,11 @@ def main():
 
     player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0, facing="E")
     enemy = Enemy(12,10,(80, 255, 80),100,100,0)
+    player = Player(maze.entry[0], maze.entry[1], 4, 4, 0, facing="E")
     enemy1 = Enemy(1, 19, (80, 255, 80), 100, 100, 0)
     enemy2 = Enemy(19, 19, (255, 255, 40), 100, 100, 0)
     enemy3 = Enemy(19, 1, (0, 250, 255), 100, 100, 0)
+    list_enemy=[enemy1, enemy2, enemy3]
 
     screen = pygame.display.set_mode((width * cell_size, height * cell_size))
     pygame.display.set_caption("Maze Base")
@@ -200,10 +202,11 @@ def main():
     font = pygame.font.SysFont(None, 48)
 
     won = False
+    lost = False
+    test_position = False
 
-    # 🔹 Timer pour les ennemis
     last_enemy_move = pygame.time.get_ticks()
-    move_delay = 500  # 500 ms
+    move_delay = 500 
 
     running = True
     while running:
@@ -212,15 +215,16 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+                test_position = True
 
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP and not won:
+                if event.key == pygame.K_UP and not won and not lost:
                     player.move("N", maze)
-                elif event.key == pygame.K_DOWN and not won:
+                elif event.key == pygame.K_DOWN and not won and not lost:
                     player.move("S", maze)
-                elif event.key == pygame.K_LEFT and not won:
+                elif event.key == pygame.K_LEFT and not won and not lost:
                     player.move("W", maze)
-                elif event.key == pygame.K_RIGHT and not won:
+                elif event.key == pygame.K_RIGHT and not won and not lost:
                     player.move("E", maze)
                 elif event.key == pygame.K_s:
                     bullet_x = player.i * maze.cell_size + maze.cell_size // 2
@@ -248,25 +252,34 @@ def main():
                     player = Player(maze.entry[0], maze.entry[1], (255, 80, 80), 100, 100, 0, facing="E")
                     enemy = Enemy(12,10,(80, 255, 80),100,100,0)
                     bullets = []
+                    player = Player(maze.entry[0], maze.entry[1], 4, 4, 0, facing="E")
                     enemy1 = Enemy(1, 19, (80, 255, 80), 100, 100, 0)
                     enemy2 = Enemy(19, 19, (255, 255, 40), 100, 100, 0)
                     enemy3 = Enemy(19, 1, (0, 250, 255), 100, 100, 0)
+                    list_enemy = [enemy1, enemy2, enemy3]
                     won = False
+                    lost = False
+            
+            
 
-        # 🔹 Déplacement automatique des ennemis toutes les 500 ms
-        if current_time - last_enemy_move > move_delay:
-            enemy1.find_path(maze, (player.i, player.j))
-            enemy1.move()
 
-            enemy2.find_path(maze, (player.i, player.j))
-            enemy2.move()
+        
+        if current_time - last_enemy_move > move_delay and not won and not lost:
+            test_position = True
+            for enemy in list_enemy:
+                enemy.find_path(maze, (player.i, player.j))
+                enemy.move()
+                last_enemy_move = current_time
+                
+                
+        if test_position == True:
+            test_position = False
+            for enemy in list_enemy:
+                if enemy.in_player() and player.health > 0:
+                    player.health -= 1
 
-            enemy3.find_path(maze, (player.i, player.j))
-            enemy3.move()
 
-            last_enemy_move = current_time
-
-        # 🔹 Vérifie victoire
+        
         if (player.i, player.j) == maze.exit:
             won = True
 
@@ -278,16 +291,27 @@ def main():
         bullets = [bullet for bullet in bullets if bullet.alive]
 
         # 🔹 Affichage
+            
+        if player.health == 0:
+            lost = True
+     
         maze.draw(screen)
-        enemy1.draw(screen, maze.cell_size)
-        enemy2.draw(screen, maze.cell_size)
-        enemy3.draw(screen, maze.cell_size)
+        for enemy in list_enemy:
+            enemy.draw(screen, maze.cell_size)
         player.draw(screen, maze.cell_size)
         for bullet in bullets:
             bullet.draw(screen)
 
         if won:
             message = font.render("You Won! Press R to restart", True, (255, 255, 255))
+            message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+            background_rect = message_rect.inflate(24, 20)
+            pygame.draw.rect(screen, (20, 24, 38), background_rect)
+            pygame.draw.rect(screen, (255, 215, 0), background_rect, 2)
+            screen.blit(message, message_rect)
+        
+        if lost:
+            message = font.render("You lost! Press R to restart", True, (255, 255, 255))
             message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
             background_rect = message_rect.inflate(24, 20)
             pygame.draw.rect(screen, (20, 24, 38), background_rect)
