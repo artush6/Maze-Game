@@ -251,6 +251,8 @@ def main():
 
         for bullet in bullets:
             bullet.update(maze, screen.get_width(), screen.get_height())
+            if enemy.is_alive:
+                bullet.collides_with_enemy(enemy, maze.cell_size)
 
         bullets = [bullet for bullet in bullets if bullet.alive]
 

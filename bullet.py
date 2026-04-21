@@ -59,5 +59,22 @@ class Bullet:
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.radius)
 
-    def collides_with_enemy(self):
-        pass
+    def collides_with_enemy(self, enemy, cell_size):
+        if not enemy.is_alive:
+            return False
+
+        enemy_x = enemy.i * cell_size
+        enemy_y = enemy.j * cell_size
+
+        enemy_rect = pygame.Rect(
+            enemy_x + 6,
+            enemy_y + 6,
+            cell_size - 12,
+            cell_size - 12
+        )
+
+        if enemy_rect.collidepoint(int(self.x), int(self.y)):
+            self.alive = False
+            enemy.health = max(0, enemy.health - 50)
+            return True
+        return False
