@@ -3,7 +3,7 @@ from random import choice, randint, shuffle
 
 from pile import Stack
 from player import Player
-from enemy import Enemy
+from enemy import Enemy, ENEMY_TYPES
 from bullet import Bullet
 
 
@@ -137,7 +137,7 @@ class Maze:
         self.exit = (self.width - 1, self.height - 1)
         self.grid[0][0].wall_west = False
         self.grid[self.width - 1][self.height - 1].wall_east = False
-        
+
     def draw(self, surface):
         """Draw the full maze in a Pygame window."""
         cell = self.cell_size
@@ -190,14 +190,26 @@ def main():
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 48)
 
+    def respawn_positions(enemy, spawn_count):
+        if getattr(enemy, "spawn_style", "death") == "origin":
+            return [(enemy.start_i, enemy.start_j)] * spawn_count
+
+        if getattr(enemy, "spawn_style", "death") == "corners":
+            corners = [(width - 1, 0), (0, height - 1), (0, 0), (width - 1, height - 1)]
+            return corners[:spawn_count]
+
+        return [(enemy.i, enemy.j)] * spawn_count
+
     def build_game_state():
         maze = Maze(width, height, cell_size)
         maze.generate()
         player = Player(maze.entry[0], maze.entry[1], 4, 4, 0, facing="E")
         enemies = [
-            Enemy(1, 19, (80, 255, 80), 100, 100, 0),
-            Enemy(19, 19, (255, 255, 40), 100, 100, 0),
-            Enemy(19, 1, (0, 250, 255), 100, 100, 0),
+            Enemy.from_type(1, 19, "chaser"),
+            Enemy.from_type(19, 19, "revenant"),
+            Enemy.from_type(19, 1, "hunter"),
+            Enemy.from_type(10, 19, "splitter"),
+            Enemy.from_type(19, 10, "tank"),
         ]
         return maze, player, enemies
 
@@ -275,6 +287,19 @@ def main():
 
         bullets = [bullet for bullet in bullets if bullet.alive]
 
+        next_enemies = []
+        spawned_enemies = []
+        for enemy in list_enemy:
+            if enemy.is_alive:
+                next_enemies.append(enemy)
+                continue
+
+            positions = respawn_positions(enemy, len(getattr(enemy, "on_death_spawn", [])))
+            for spawn_type, (spawn_i, spawn_j) in zip(getattr(enemy, "on_death_spawn", []), positions):
+                spawned_enemies.append(Enemy.from_type(spawn_i, spawn_j, spawn_type))
+
+        list_enemy = next_enemies + spawned_enemies
+
         if player.health == 0:
             lost = True
 
@@ -292,7 +317,7 @@ def main():
             pygame.draw.rect(screen, (20, 24, 38), background_rect)
             pygame.draw.rect(screen, (255, 215, 0), background_rect, 2)
             screen.blit(message, message_rect)
-        
+
         if lost:
             message = font.render("You lost! Press R to restart", True, (255, 255, 255))
             message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
