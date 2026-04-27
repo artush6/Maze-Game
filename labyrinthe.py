@@ -203,7 +203,7 @@ def main():
     def build_game_state():
         maze = Maze(width, height, cell_size)
         maze.generate()
-        player = Player(maze.entry[0], maze.entry[1], 4, 4, 0, facing="E")
+        player = Player(maze.entry[0], maze.entry[1], 4, 4, 2, facing="E")
         enemies = [
             Enemy.from_type(1, 19, "chaser"),
             Enemy.from_type(19, 19, "revenant"),
