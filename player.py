@@ -9,12 +9,13 @@ class Player:
         "E": (1, 0),
     }
 
-    def __init__(self, i, j, health, max_health, attack_cooldown, facing="E"):
+    def __init__(self, i, j, health, max_health, attack_cooldown, facing="E", nb_bullets=2):
         self.i = i
         self.j = j
         self.health = health
         self.max_health = max_health
         self.attack_cooldown = attack_cooldown
+        self.nb_bullets = nb_bullets
         self.facing = facing
         self.color = ("red", "red", "orange", "yellow", "green")
 

@@ -220,6 +220,9 @@ def main():
 
     last_enemy_move = pygame.time.get_ticks()
     move_delay = 500
+    
+    ones_time = pygame.time.get_ticks()
+    bullets_delay = 1000
 
     running = True
     while running:
@@ -240,30 +243,33 @@ def main():
                 elif event.key == pygame.K_RIGHT and not won and not lost:
                     player.move("E", maze)
                 elif event.key == pygame.K_s:
-                    bullet_x = player.i * maze.cell_size + maze.cell_size // 2
-                    bullet_y = player.j * maze.cell_size + maze.cell_size // 2
+                    if player.nb_bullets > 0:
+                        bullet_x = player.i * maze.cell_size + maze.cell_size // 2
+                        bullet_y = player.j * maze.cell_size + maze.cell_size // 2
 
-                    if player.facing == "N":
-                        dx, dy = 0, -1
-                        bullet_y -= 10
-                    elif player.facing == "S":
-                        dx, dy = 0, 1
-                        bullet_y += 10
-                    elif player.facing == "W":
-                        dx, dy = -1, 0
-                        bullet_x -= 10
-                    else:
-                        dx, dy = 1, 0
-                        bullet_x += 10
+                        if player.facing == "N":
+                            dx, dy = 0, -1
+                            bullet_y -= 10
+                        elif player.facing == "S":
+                            dx, dy = 0, 1
+                            bullet_y += 10
+                        elif player.facing == "W":
+                            dx, dy = -1, 0
+                            bullet_x -= 10
+                        else:
+                            dx, dy = 1, 0
+                            bullet_x += 10
 
-                    new_bullet = Bullet(bullet_x, bullet_y, dx, dy)
-                    bullets.append(new_bullet)
+                        new_bullet = Bullet(bullet_x, bullet_y, dx, dy)
+                        player.nb_bullets -= 1
+                        bullets.append(new_bullet)
 
                 elif event.key == pygame.K_r:
                     maze, player, list_enemy = build_game_state()
                     bullets = []
                     won = False
                     lost = False
+                    ones_time = pygame.time.get_ticks()
 
         if current_time - last_enemy_move > move_delay and not won and not lost:
             for enemy in list_enemy:
@@ -272,6 +278,11 @@ def main():
                 if enemy.in_player(player):
                     enemy_reached_player = True
             last_enemy_move = current_time
+        
+        if current_time - ones_time > bullets_delay and not won and not lost:
+            if player.nb_bullets < 2:
+                player.nb_bullets += 1    
+                ones_time = current_time
 
         if enemy_reached_player and player.health > 0:
             player.health -= 1
