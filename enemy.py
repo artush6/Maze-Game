@@ -77,16 +77,6 @@ class Enemy:
                             g_score[next_cell] = tentative_g
                             f_score[next_cell] = tentative_g + distance(next_cell, goal)
                             open_set.append((f_score[next_cell], tentative_g, next_cell))
-                        if (direction == 'N' and not maze.grid[current[0]][current[1]].wall_north) or \
-                            (direction == 'S' and not maze.grid[current[0]][current[1]].wall_south) or \
-                            (direction == 'W' and not maze.grid[current[0]][current[1]].wall_west) or \
-                            (direction == 'E' and not maze.grid[current[0]][current[1]].wall_east):
-                                tentative_g = g_score[current] + 1
-                                if next_cell not in g_score or tentative_g < g_score[next_cell]:
-                                    came_from[next_cell] = current
-                                    g_score[next_cell] = tentative_g
-                                    f_score[next_cell] = tentative_g + distance(next_cell, goal)
-                                    open_set.append((f_score[next_cell], tentative_g, next_cell))
 
 
         
