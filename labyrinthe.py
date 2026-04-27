@@ -231,7 +231,6 @@ def main():
                 elif event.key == pygame.K_RIGHT and not won and not lost:
                     player.move("E", maze)
                 elif event.key == pygame.K_s:
-                    print(player.nb_bullets)
                     if player.nb_bullets > 0:
                         bullet_x = player.i * maze.cell_size + maze.cell_size // 2
                         bullet_y = player.j * maze.cell_size + maze.cell_size // 2
