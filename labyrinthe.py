@@ -1,6 +1,6 @@
 import pygame
 from random import choice, randint, shuffle
-
+from super_objet import Super_objet
 from pile import Stack
 from player import Player
 from enemy import Enemy
@@ -199,9 +199,14 @@ def main():
             Enemy(19, 19, (255, 255, 40), 100, 100, 0),
             Enemy(19, 1, (0, 250, 255), 100, 100, 0),
         ]
-        return maze, player, enemies
+        pos_x,  pos_y = 100, 100
+        while pos_x + pos_y > (maze.width + maze.height)//2:
+            pos_x = randint(0,maze.width)
+            pos_y = randint(0,maze.height-1)
+        super_objet = Super_objet(pos_x, pos_y)
+        return maze, player, enemies, super_objet
 
-    maze, player, list_enemy = build_game_state()
+    maze, player, list_enemy, super_objet = build_game_state()
     bullets = []
     won = False
     lost = False
@@ -253,7 +258,7 @@ def main():
                         bullets.append(new_bullet)
 
                 elif event.key == pygame.K_r:
-                    maze, player, list_enemy = build_game_state()
+                    maze, player, list_enemy, super_objet = build_game_state()
                     bullets = []
                     won = False
                     lost = False
@@ -268,8 +273,12 @@ def main():
         
         if current_time - ones_time > bullets_delay and not won and not lost:
             if player.nb_bullets < 2:
-                player.nb_bullets += 1    
+                player.nb_bullets += 1   
                 ones_time = current_time
+            
+        if super_objet.in_player(player):
+            super_objet.is_alive = False
+            super_objet.find_path(maze)
 
         if enemy_reached_player and player.health > 0:
             player.health -= 1
@@ -289,6 +298,11 @@ def main():
             lost = True
 
         maze.draw(screen)
+        
+        if super_objet.is_alive:
+            super_objet.draw_objet(screen, maze.cell_size)
+        else:
+            super_objet.draw_path(screen, maze.cell_size)
         for enemy in list_enemy:
             enemy.draw(screen, maze.cell_size)
         player.draw(screen, maze.cell_size)
