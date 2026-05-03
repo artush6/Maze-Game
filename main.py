@@ -1,0 +1,274 @@
+import pygame
+from random import choice, randint, shuffle
+from maps import Maps
+from player import Player
+from enemy import Enemy, ENEMY_TYPES
+from bullet import Bullet
+from labyrinthe import Cell, Maze
+
+
+def main():
+    pygame.init()
+    state = "menu"
+
+    cell_size = 40
+    width = 20
+    height = 20
+
+    screen = pygame.display.set_mode((width * cell_size + 400, height * cell_size + 5))
+    pygame.display.set_caption("Maze Base")
+    clock = pygame.time.Clock()
+    font = pygame.font.SysFont(None, 48)
+    button_play = pygame.Rect(screen.get_width()//2 - 150, 200, 300, 60)
+    button_rules = pygame.Rect(screen.get_width()//2 - 150, 300, 300, 60)
+    button_back = pygame.Rect(20, 20, 120, 50)
+
+    def respawn_positions(enemy, spawn_count):
+        if getattr(enemy, "spawn_style", "death") == "origin":
+            return [(enemy.start_i, enemy.start_j)] * spawn_count
+
+        if getattr(enemy, "spawn_style", "death") == "corners":
+            corners = [(width - 1, 0), (0, height - 1), (0, 0), (width - 1, height - 1)]
+            return corners[:spawn_count]
+
+        return [(enemy.i, enemy.j)] * spawn_count
+
+    def build_game_state(level):
+        maze = Maze(width, height, cell_size)
+        maze.generate()
+        player = Player(maze.entry[0], maze.entry[1], 4, 4, 2, facing="E")
+        enemies = [
+            Enemy.from_type(1, 19, "chaser", level),
+            Enemy.from_type(19, 19, "revenant", level),
+            Enemy.from_type(19, 1, "hunter", level),
+            Enemy.from_type(10, 19, "splitter", level),
+            Enemy.from_type(19, 10, "tank", level),
+        ]
+        pos_x,  pos_y = 100, 100
+        while pos_x + pos_y > (maze.width + maze.height)//2:
+            pos_x = randint(0,maze.width)
+            pos_y = randint(0,maze.height-1)
+        maps = Maps(pos_x, pos_y)
+        return maze, player, enemies, maps
+    
+    ones_time = pygame.time.get_ticks()
+    bullets_delay = 1000
+    
+    last_move_time = 0
+    move_delay = 120
+    
+    maze, player, list_enemy, maps = build_game_state(1)
+    bullets = []
+    won = False
+    lost = False
+    level_changed = False
+
+
+    running = True
+    while running:
+        current_time = pygame.time.get_ticks()
+        enemy_reached_player = False
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+
+                if state == "menu":
+                    if button_play.collidepoint(mouse_pos):
+                        level = 1
+                        maze, player, list_enemy, maps = build_game_state(level)
+                        bullets = []
+                        won = False
+                        lost = False
+                        level_changed = False
+                        state = "game"
+
+                elif state == "rules":
+                    if button_back.collidepoint(mouse_pos):
+                        state = "menu"
+
+            elif event.type == pygame.KEYDOWN and state == "game":
+                if event.key == pygame.K_s:
+                    if player.nb_bullets > 0:
+                        bullet_x = player.i * maze.cell_size + maze.cell_size // 2
+                        bullet_y = player.j * maze.cell_size + maze.cell_size // 2
+
+                        if player.facing == "N":
+                            dx, dy = 0, -1
+                            bullet_y -= 10
+                        elif player.facing == "S":
+                            dx, dy = 0, 1
+                            bullet_y += 10
+                        elif player.facing == "W":
+                            dx, dy = -1, 0
+                            bullet_x -= 10
+                        else:
+                            dx, dy = 1, 0
+                            bullet_x += 10
+
+                        new_bullet = Bullet(bullet_x, bullet_y, dx, dy)
+                        player.nb_bullets -= 1
+                        bullets.append(new_bullet)
+
+                elif event.key == pygame.K_r:
+                    maze, player, list_enemy, maps = build_game_state(level)
+                    bullets = []
+                    won = False
+                    lost = False
+                    level_changed = False
+                    ones_time = pygame.time.get_ticks()
+                    
+        keys = pygame.key.get_pressed()
+
+        if state == "game" and not won and not lost:
+            if current_time - last_move_time > move_delay:
+                if keys[pygame.K_UP]:
+                    player.move("N", maze)
+                    last_move_time = current_time
+                elif keys[pygame.K_DOWN]:
+                    player.move("S", maze)
+                    last_move_time = current_time
+                elif keys[pygame.K_LEFT]:
+                    player.move("W", maze)
+                    last_move_time = current_time
+                elif keys[pygame.K_RIGHT]:
+                    player.move("E", maze)
+                    last_move_time = current_time
+
+        if state == "game":
+            for enemy in list_enemy:
+                if current_time - enemy.last_move > enemy.move_delay and not won and not lost:
+                    enemy.find_path(maze, (player.i, player.j))
+                    enemy.move()
+                    if enemy.in_player(player):
+                        enemy_reached_player = True
+                    enemy.last_move = current_time
+        
+            if current_time - ones_time > bullets_delay and not won and not lost:
+                if player.nb_bullets < 2:
+                    player.nb_bullets += 1   
+                    ones_time = current_time
+            
+            if maps.in_player(player):
+                maps.is_alive = False
+                maps.find_path(maze)
+
+            if enemy_reached_player and player.health > 0:
+                player.health -= 1
+
+            if (player.i, player.j) == maze.exit:
+                won = True
+
+            for bullet in bullets:
+                bullet.update(maze, screen.get_width(), screen.get_height())
+                for enemy in list_enemy:
+                    if enemy.is_alive:
+                        bullet.collides_with_enemy(enemy, maze.cell_size)
+
+            bullets = [bullet for bullet in bullets if bullet.alive]
+
+            next_enemies = []
+            spawned_enemies = []
+            for enemy in list_enemy:
+                if enemy.is_alive:
+                    next_enemies.append(enemy)
+                    continue
+
+                positions = respawn_positions(enemy, len(getattr(enemy, "on_death_spawn", [])))
+                for spawn_type, (spawn_i, spawn_j) in zip(getattr(enemy, "on_death_spawn", []), positions):
+                    spawned_enemies.append(Enemy.from_type(spawn_i, spawn_j, spawn_type))
+
+            list_enemy = next_enemies + spawned_enemies
+
+            if player.health == 0:
+                lost = True
+
+
+
+        screen.fill((maze.background_color))
+
+        if state == "menu":
+            title = font.render("Maze Game", True, (255,255,255))
+            screen.blit(title, (screen.get_width()//2 - title.get_width()//2, 100))
+
+            pygame.draw.rect(screen, (70,130,180), button_play)
+            pygame.draw.rect(screen, (70,130,180), button_rules)
+
+            txt_play = font.render("Lancer le jeu", True, (255,255,255))
+            txt_rules = font.render("Regles", True, (255,255,255))
+                
+            screen.blit(txt_play, txt_play.get_rect(center=button_play.center))
+            screen.blit(txt_rules, txt_rules.get_rect(center=button_rules.center))
+
+
+        elif state == "rules":
+            rules_text = [
+                "Objectif : atteindre la sortie",
+                "Fleches : se deplacer",
+                "S : tirer",
+                "R : recommencer",
+                "Eviter les ennemis"
+                ]
+
+            for i, line in enumerate(rules_text):
+                txt = font.render(line, True, (255,255,255))
+                screen.blit(txt, (100, 100 + i*60))
+
+            pygame.draw.rect(screen, (180,70,70), button_back)
+            txt_back = font.render("Retour", True, (255,255,255))
+            screen.blit(txt_back, txt_back.get_rect(center=button_back.center))
+
+
+        elif state == "game":
+            
+            message = font.render(f"level :{level}", True, (255, 255, 255))
+            message_rect = message.get_rect(center=(screen.get_width() -300, 50))
+            screen.blit(message, message_rect)
+            
+            maze.draw(screen)
+
+            if maps.is_alive:
+                maps.draw_objet(screen, maze.cell_size)
+            else:
+                maps.draw_path(screen, maze.cell_size)
+
+            for enemy in list_enemy:
+                enemy.draw(screen, maze.cell_size)
+
+            player.draw(screen, maze.cell_size)
+
+            for bullet in bullets:
+                bullet.draw(screen)
+
+        if won:
+            if not level_changed:
+                level = level+1
+                level_changed = True
+            message = font.render(f"You Won! Press R to go to the level{level}!", True, (255, 255, 255))
+            message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+            background_rect = message_rect.inflate(24, 20)
+            pygame.draw.rect(screen, (20, 24, 38), background_rect)
+            pygame.draw.rect(screen, (255, 215, 0), background_rect, 2)
+            screen.blit(message, message_rect)
+
+        if lost:
+            if not level_changed:
+                level = max(1,level-1)
+                level_changed = True
+            message = font.render(f"You Lost! Press R to go to level {level}!", True, (255, 255, 255))
+            message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+            background_rect = message_rect.inflate(24, 20)
+            pygame.draw.rect(screen, (20, 24, 38), background_rect)
+            pygame.draw.rect(screen, (255, 215, 0), background_rect, 2)
+            screen.blit(message, message_rect)
+
+        pygame.display.flip()
+        clock.tick(30)
+
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()

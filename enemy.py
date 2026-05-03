@@ -85,6 +85,7 @@ class Enemy:
         max_health,
         attack_cooldown,
         speed=1.0,
+        level=1,
         size=1.0,
         on_death_spawn=None,
     ):
@@ -94,18 +95,28 @@ class Enemy:
         self.health = health
         self.max_health = max_health
         self.attack_cooldown = attack_cooldown
+
         self.speed = speed
+        self.level = level
+
+        self.move_delay = 1000 // (self.speed * (1 + 0.1*self.level))
+
+        self.last_move = 0
+
         self.size = size
         self.on_death_spawn = list(on_death_spawn or [])
         self.spawn_style = "death"
+
         self.move_progress = 0.0
         self.current_path = []
+
         self.start_i = i
         self.start_j = j
 
     @classmethod
-    def from_type(cls, i, j, enemy_type):
+    def from_type(cls, i, j, enemy_type, level=1):
         data = ENEMY_TYPES[enemy_type]
+
         enemy = cls(
             i,
             j,
@@ -114,11 +125,14 @@ class Enemy:
             data["max_health"],
             data["attack_cooldown"],
             speed=data["speed"],
+            level=level,
             size=data["size"],
             on_death_spawn=data["on_death_spawn"],
         )
+
         enemy.enemy_type = enemy_type
         enemy.spawn_style = data.get("spawn_style", "death")
+
         return enemy
 
     @property
@@ -127,11 +141,10 @@ class Enemy:
 
     def move(self):
         self.move_progress += self.speed
-        while self.current_path != [] and self.move_progress >= 1:
+        if self.current_path != []:
             nv_position = self.current_path.pop(0)
             self.i = nv_position[0]
             self.j = nv_position[1]
-            self.move_progress -= 1
 
     def find_path(self, maze, goal):
         """
