@@ -1,10 +1,10 @@
 import pygame
-from random import choice, randint, shuffle
+from random import randint
 from maps import Maps
 from player import Player
-from enemy import Enemy, ENEMY_TYPES
+from enemy import Enemy
 from bullet import Bullet
-from labyrinthe import Cell, Maze
+from labyrinthe import Maze
 
 
 def main():
@@ -16,12 +16,63 @@ def main():
     height = 20
 
     screen = pygame.display.set_mode((width * cell_size + 400, height * cell_size + 5))
-    pygame.display.set_caption("Maze Base")
+    pygame.display.set_caption("Jeu du labyrinthe")
     clock = pygame.time.Clock()
     font = pygame.font.SysFont(None, 48)
+    small_font = pygame.font.SysFont(None, 28)
+    tiny_font = pygame.font.SysFont(None, 24)
     button_play = pygame.Rect(screen.get_width()//2 - 150, 200, 300, 60)
     button_rules = pygame.Rect(screen.get_width()//2 - 150, 300, 300, 60)
     button_back = pygame.Rect(20, 20, 120, 50)
+    pause_continue_button = pygame.Rect(screen.get_width()//2 - 160, 240, 320, 60)
+    pause_restart_button = pygame.Rect(screen.get_width()//2 - 160, 320, 320, 60)
+    pause_menu_button = pygame.Rect(screen.get_width()//2 - 160, 400, 320, 60)
+    sidebar_x = width * cell_size + 20
+
+    def draw_text_block(surface, text_lines, start_x, start_y, line_height, text_font, color):
+        y = start_y
+        for line in text_lines:
+            txt = text_font.render(line, True, color)
+            surface.blit(txt, (start_x, y))
+            y += line_height
+
+    def draw_sidebar(surface):
+        panel_rect = pygame.Rect(width * cell_size + 5, 0, 395, height * cell_size + 5)
+        pygame.draw.rect(surface, (32, 38, 56), panel_rect)
+        pygame.draw.line(surface, (255, 215, 0), (width * cell_size + 5, 0), (width * cell_size + 5, height * cell_size + 5), 2)
+
+        title = font.render("Commandes", True, (255, 255, 255))
+        surface.blit(title, (sidebar_x, 35))
+
+        controls_title = small_font.render("Pendant la partie", True, (255, 215, 0))
+        surface.blit(controls_title, (sidebar_x, 135))
+        controls_lines = [
+            "↑ ↓ ← →",
+            "S : tirer",
+            "R : recommencer",
+            "ESC : pause",
+        ]
+        draw_text_block(surface, controls_lines, sidebar_x, 175, 30, tiny_font, (235, 235, 235))
+
+    def draw_pause_overlay(surface):
+        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
+        overlay.fill((10, 12, 20, 180))
+        surface.blit(overlay, (0, 0))
+
+        title = font.render("Pause", True, (255, 255, 255))
+        surface.blit(title, title.get_rect(center=(screen.get_width() // 2, 160)))
+
+        pygame.draw.rect(surface, (70, 130, 180), pause_continue_button)
+        pygame.draw.rect(surface, (70, 130, 180), pause_restart_button)
+        pygame.draw.rect(surface, (180, 70, 70), pause_menu_button)
+
+        txt_continue = small_font.render("Continuer", True, (255, 255, 255))
+        txt_restart = small_font.render("Recommencer", True, (255, 255, 255))
+        txt_menu = small_font.render("Retour au menu", True, (255, 255, 255))
+
+        surface.blit(txt_continue, txt_continue.get_rect(center=pause_continue_button.center))
+        surface.blit(txt_restart, txt_restart.get_rect(center=pause_restart_button.center))
+        surface.blit(txt_menu, txt_menu.get_rect(center=pause_menu_button.center))
 
     def respawn_positions(enemy, spawn_count):
         if getattr(enemy, "spawn_style", "death") == "origin":
@@ -46,7 +97,7 @@ def main():
         ]
         pos_x,  pos_y = 100, 100
         while pos_x + pos_y > (maze.width + maze.height)//2:
-            pos_x = randint(0,maze.width)
+            pos_x = randint(0, maze.width - 1)
             pos_y = randint(0,maze.height-1)
         maps = Maps(pos_x, pos_y)
         return maze, player, enemies, maps
@@ -85,13 +136,31 @@ def main():
                         lost = False
                         level_changed = False
                         state = "game"
+                    elif button_rules.collidepoint(mouse_pos):
+                        state = "rules"
 
                 elif state == "rules":
                     if button_back.collidepoint(mouse_pos):
                         state = "menu"
 
+                elif state == "pause":
+                    if pause_continue_button.collidepoint(mouse_pos):
+                        state = "game"
+                    elif pause_restart_button.collidepoint(mouse_pos):
+                        maze, player, list_enemy, maps = build_game_state(level)
+                        bullets = []
+                        won = False
+                        lost = False
+                        level_changed = False
+                        ones_time = pygame.time.get_ticks()
+                        state = "game"
+                    elif pause_menu_button.collidepoint(mouse_pos):
+                        state = "menu"
+
             elif event.type == pygame.KEYDOWN and state == "game":
-                if event.key == pygame.K_s:
+                if event.key == pygame.K_ESCAPE:
+                    state = "pause"
+                elif event.key == pygame.K_s:
                     if player.nb_bullets > 0:
                         bullet_x = player.i * maze.cell_size + maze.cell_size // 2
                         bullet_y = player.j * maze.cell_size + maze.cell_size // 2
@@ -120,6 +189,10 @@ def main():
                     lost = False
                     level_changed = False
                     ones_time = pygame.time.get_ticks()
+
+            elif event.type == pygame.KEYDOWN and state == "pause":
+                if event.key == pygame.K_ESCAPE:
+                    state = "game"
                     
         keys = pygame.key.get_pressed()
 
@@ -191,7 +264,7 @@ def main():
         screen.fill((maze.background_color))
 
         if state == "menu":
-            title = font.render("Maze Game", True, (255,255,255))
+            title = font.render("Jeu du labyrinthe", True, (255,255,255))
             screen.blit(title, (screen.get_width()//2 - title.get_width()//2, 100))
 
             pygame.draw.rect(screen, (70,130,180), button_play)
@@ -206,28 +279,27 @@ def main():
 
         elif state == "rules":
             rules_text = [
-                "Objectif : atteindre la sortie",
-                "Fleches : se deplacer",
-                "S : tirer",
-                "R : recommencer",
-                "Eviter les ennemis"
-                ]
+                "Objectif : atteindre la sortie du labyrinthe.",
+                "Fleches : se deplacer dans les couloirs.",
+                "S : tirer une balle dans la direction regardee.",
+                "R : recommencer la partie au niveau actuel.",
+                "Les ennemis vous retirent de la vie au contact.",
+                "La carte magique montre le chemin vers la sortie.",
+                "Le nombre de balles est limite mais se recharge.",
+                "Si vous gagnez, vous passez au niveau suivant.",
+                "Si vous perdez, vous revenez au niveau precedent.",
+            ]
 
             for i, line in enumerate(rules_text):
-                txt = font.render(line, True, (255,255,255))
-                screen.blit(txt, (100, 100 + i*60))
+                txt = small_font.render(line, True, (255,255,255))
+                screen.blit(txt, (100, 110 + i*48))
 
             pygame.draw.rect(screen, (180,70,70), button_back)
             txt_back = font.render("Retour", True, (255,255,255))
             screen.blit(txt_back, txt_back.get_rect(center=button_back.center))
 
 
-        elif state == "game":
-            
-            message = font.render(f"level :{level}", True, (255, 255, 255))
-            message_rect = message.get_rect(center=(screen.get_width() -300, 50))
-            screen.blit(message, message_rect)
-            
+        elif state == "game" or state == "pause":
             maze.draw(screen)
 
             if maps.is_alive:
@@ -243,11 +315,16 @@ def main():
             for bullet in bullets:
                 bullet.draw(screen)
 
+            draw_sidebar(screen)
+
+            if state == "pause":
+                draw_pause_overlay(screen)
+
         if won:
             if not level_changed:
                 level = level+1
                 level_changed = True
-            message = font.render(f"You Won! Press R to go to the level{level}!", True, (255, 255, 255))
+            message = font.render(f"Gagne ! Appuie sur R pour aller au niveau {level} !", True, (255, 255, 255))
             message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
             background_rect = message_rect.inflate(24, 20)
             pygame.draw.rect(screen, (20, 24, 38), background_rect)
@@ -258,7 +335,7 @@ def main():
             if not level_changed:
                 level = max(1,level-1)
                 level_changed = True
-            message = font.render(f"You Lost! Press R to go to level {level}!", True, (255, 255, 255))
+            message = font.render(f"Perdu ! Appuie sur R pour aller au niveau {level} !", True, (255, 255, 255))
             message_rect = message.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
             background_rect = message_rect.inflate(24, 20)
             pygame.draw.rect(screen, (20, 24, 38), background_rect)
