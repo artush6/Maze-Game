@@ -1,38 +1,37 @@
+Not done yet:
+
+Done:
 
 Gameplay
-- make a maze with several possible paths
-- Add player health and damage when an enemy touches the player.
-- Add a simple attack system with a cooldown.
-- Add temporary obstacles that appear after some time and then disappear.
+-Generate a maze with multiple possible paths
+-Add player health and deal damage when an enemy touches the player
+-Add a simple attack system
+-Add a cursor to show where the player is aiming
+-Create a Player class with a grid position (i, j)
+-Add movement between cells using the keyboard
+-Prevent movement through walls using wall_north, wall_south, wall_east, wall_west
+-Add a visible exit tile and detect when the player reaches it
+-Create an Enemy class with automatic pathfinding
+-Create a map item that reveals the exit
+-Create collectible items in the maze (coins)
+-Implement a progressive level system
+-Create a story
+-Implement the story with text
+
+Core System
+-Replace the old matplotlib display with a Pygame window
+-Keep the Cell and Maze classes to preserve the original project structure
+-Preserve the stack-based maze generation algorithm (Stack)
+-Add a simple main() function to launch the window and render the maze
+-Allow maze regeneration with a key like R for quick testing
 
 UI / Menu
-- Create a start menu with at least `Start` and `Quit`.
-- Display a lose screen when health reaches 0.
-- Show basic information on screen: health, controls, game state.
-
-- Keep the project small and understandable: one feature, then verify, then continue.
-
-Done
-
-Core system
-- Replace the old matplotlib display with a Pygame window.
-- Keep the `Cell` and `Maze` classes so the original project structure stays visible.
-- Preserve the maze generation algorithm based on the stack (`Pile`).
-- Add a simple `main()` function to launch the window and draw the maze.
-- Allow maze regeneration with a key like `R` for quick testing.
-
-Gameplay
-- Create a `Player` class with a grid position `(i, j)`.
-- Add movement from one cell to another using the keyboard.
-- Prevent movement through walls by using `wall_north`, `wall_south`, `wall_east`, `wall_west`.
-- Add a visible exit tile and detect when the player reaches it.
-- Create an `Enemy` class with simple movement.
-
-UI / Menu
-- Display a win screen when the player reaches the exit.
+-Display a win screen when the player reaches the exit
+-Create a start menu with at least Start and Quit
+-Display a lose screen when health reaches 0
+-Show basic information on screen: health, controls, game state
 
 Polish
-- Rename variables and methods into full English where needed.
-- Add short comments only where the logic is not obvious.
-- Choose simple but clear colors for the maze, player, enemies, and exit.
-- Test each feature one by one instead of coding everything at once.
+-Rename variables and methods into proper English where needed
+-Add images for the maze, player, enemies, and exit
+-Test each feature individually instead of implementing everything at once
